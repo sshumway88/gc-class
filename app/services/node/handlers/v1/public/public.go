@@ -75,6 +75,33 @@ func (h Handlers) Mempool(ctx context.Context, w http.ResponseWriter, r *http.Re
 	return web.Respond(ctx, w, trans, http.StatusOK)
 }
 
+// MineBlock just provides a starting point for the class.
+func (h Handlers) MineBlock(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	mempool := h.State.Mempool()
+
+	f := func(v string, args ...any) {
+		h.Log.Infof(v, args...)
+	}
+
+	args := database.POWArgs{
+		BeneficiaryID: database.AccountID("0xFef311483Cc040e1A89fb9bb469eeB8A70935EF8"),
+		Difficulty:    6,
+		MiningReward:  700,
+		PrevBlock:     database.Block{},
+		Trans:         mempool,
+		EvHandler:     f,
+	}
+
+	block, err := database.POW(ctx, args)
+	if err != nil {
+		return fmt.Errorf("pow: %w", err)
+	}
+
+	data := database.NewBlockData(block)
+
+	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
 // Sample just provides a starting point for the class.
 func (h Handlers) Sample(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	resp := struct {
