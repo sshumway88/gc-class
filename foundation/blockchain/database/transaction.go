@@ -1,5 +1,11 @@
 package database
 
+import (
+	"crypto/ecdsa"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
+	"math/big"
+)
+
 // Tx is the transactional information between two parties.
 type Tx struct {
 	ChainID uint16 `json:"chain_id"` // Ethereum: The chain id that is listed in the genesis file.
@@ -24,4 +30,36 @@ func NewTx(chainID uint16, nonce uint64, fromID string, toID string, value uint6
 	}
 
 	return tx, nil
+}
+
+// Sign uses the specified private key to sign the transaction.
+func (tx Tx) Sign(privateKey *ecdsa.PrivateKey) (SignedTx, error) {
+
+	// Sign the transaction with the private key to produce a signature.
+	v, r, s, err := signature.Sign(tx, privateKey)
+	if err != nil {
+		return SignedTx{}, err
+	}
+
+	// Construct the signed transaction by adding the signature
+	// in the [R|S|V] format.
+	signedTx := SignedTx{
+		Tx: tx,
+		V:  v,
+		R:  r,
+		S:  s,
+	}
+
+	return signedTx, nil
+}
+
+// =============================================================================
+
+// SignedTx is a signed version of the transaction. This is how clients like
+// a wallet provide transactions for inclusion into the blockchain.
+type SignedTx struct {
+	Tx
+	V *big.Int `json:"v"` // Ethereum: Recovery identifier, either 29 or 30 with ardanID.
+	R *big.Int `json:"r"` // Ethereum: First coordinate of the ECDSA signature.
+	S *big.Int `json:"s"` // Ethereum: Second coordinate of the ECDSA signature.
 }
