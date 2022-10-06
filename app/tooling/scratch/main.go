@@ -46,5 +46,9 @@ func sendTx() error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusNoContent {
+		log.Fatal("WE HAD A PROBLEM")
+	}
+
 	return nil
 }
