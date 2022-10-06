@@ -25,7 +25,7 @@ func sendTx() error {
 		return fmt.Errorf("unable to load private key for node: %w", err)
 	}
 
-	tx, err := database.NewTx(1, 1, "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32", "heather", 100, 0, nil)
+	tx, err := database.NewTx(1, 1, "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32", "0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76", 100, 0, nil)
 	if err != nil {
 		return fmt.Errorf("new tx: %w", err)
 	}
