@@ -3,10 +3,13 @@ package public
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
+	v1 "github.com/ardanlabs/blockchain/business/web/v1"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
 	"github.com/ardanlabs/blockchain/foundation/web"
 	"go.uber.org/zap"
 )
@@ -24,12 +27,25 @@ func (h Handlers) SubmitWalletTransaction(ctx context.Context, w http.ResponseWr
 	}
 
 	// Decode the JSON in the post call into a Signed transaction.
-	var tx database.Tx
-	if err := web.Decode(r, &tx); err != nil {
+	var signedTx database.SignedTx
+	if err := web.Decode(r, &signedTx); err != nil {
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	h.Log.Infow("add tran", "traceid", v.TraceID, "sig:nonce", tx, "from", tx.FromID, "to", tx.ToID, "value", tx.Value, "tip", tx.Tip)
+	if err := signature.VerifySignature(signedTx.V, signedTx.R, signedTx.S); err != nil {
+		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	addr, err := signature.FromAddress(signedTx.Tx, signedTx.V, signedTx.R, signedTx.S)
+	if err != nil {
+		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Log.Infow("add tran", "traceid", v.TraceID, "sig:nonce", signedTx, "from", signedTx.FromID, "sig", addr, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
+
+	if addr != signedTx.FromID {
+		return v1.NewRequestError(errors.New("sig not match"), http.StatusBadRequest)
+	}
 
 	return web.Respond(ctx, w, nil, http.StatusNoContent)
 }
