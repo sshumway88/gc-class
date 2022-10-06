@@ -46,9 +46,18 @@ func sendTx() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK {
 		log.Fatal("WE HAD A PROBLEM")
 	}
+
+	var result struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(result)
 
 	return nil
 }

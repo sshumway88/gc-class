@@ -3,20 +3,20 @@ package public
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
 	v1 "github.com/ardanlabs/blockchain/business/web/v1"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
-	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/web"
 	"go.uber.org/zap"
 )
 
 // Handlers manages the set of bar ledger endpoints.
 type Handlers struct {
-	Log *zap.SugaredLogger
+	Log   *zap.SugaredLogger
+	State *state.State
 }
 
 // SubmitWalletTransaction adds new transactions to the mempool.
@@ -32,22 +32,23 @@ func (h Handlers) SubmitWalletTransaction(ctx context.Context, w http.ResponseWr
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	if err := signature.VerifySignature(signedTx.V, signedTx.R, signedTx.S); err != nil {
+	h.Log.Infow("add tran", "traceid", v.TraceID, "sig:nonce", signedTx, "from", signedTx.FromID, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
+
+	// Ask the state package to add this transaction to the mempool. Only the
+	// checks are the transaction signature and the recipient account format.
+	// It's up to the wallet to make sure the account has a proper balance and
+	// nonce. Fees will be taken if this transaction is mined into a block.
+	if err := h.State.UpsertWalletTransaction(signedTx); err != nil {
 		return v1.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	addr, err := signature.FromAddress(signedTx.Tx, signedTx.V, signedTx.R, signedTx.S)
-	if err != nil {
-		return v1.NewRequestError(err, http.StatusBadRequest)
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "transactions added to mempool",
 	}
 
-	h.Log.Infow("add tran", "traceid", v.TraceID, "sig:nonce", signedTx, "from", signedTx.FromID, "sig", addr, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
-
-	if addr != signedTx.FromID {
-		return v1.NewRequestError(errors.New("sig not match"), http.StatusBadRequest)
-	}
-
-	return web.Respond(ctx, w, nil, http.StatusNoContent)
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // Sample just provides a starting point for the class.

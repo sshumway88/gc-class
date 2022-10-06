@@ -5,13 +5,15 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/web"
 	"go.uber.org/zap"
 )
 
 // Handlers manages the set of bar ledger endpoints.
 type Handlers struct {
-	Log *zap.SugaredLogger
+	Log   *zap.SugaredLogger
+	State *state.State
 }
 
 // Sample just provides a starting point for the class.
