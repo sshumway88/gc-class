@@ -51,7 +51,7 @@ func run(log *zap.SugaredLogger) error {
 		conf.Version
 		Web struct {
 			ReadTimeout     time.Duration `conf:"default:5s"`
-			WriteTimeout    time.Duration `conf:"default:10s"`
+			WriteTimeout    time.Duration `conf:"default:100s"`
 			IdleTimeout     time.Duration `conf:"default:120s"`
 			ShutdownTimeout time.Duration `conf:"default:20s"`
 			DebugHost       string        `conf:"default:0.0.0.0:7080"`

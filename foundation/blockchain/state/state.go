@@ -6,12 +6,14 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/storage/disk"
 )
 
 // State manages the blockchain database.
 type State struct {
 	genesis genesis.Genesis
 	mempool *mempool.Mempool
+	disk    *disk.Disk
 }
 
 // Config represents the configuration required to start
@@ -29,10 +31,16 @@ func New(cfg Config) (*State, error) {
 		return nil, err
 	}
 
+	disk, err := disk.New("zblock/miner1")
+	if err != nil {
+		return nil, err
+	}
+
 	// Create the State to provide support for managing the blockchain.
 	state := State{
 		genesis: cfg.Genesis,
 		mempool: mempool,
+		disk:    disk,
 	}
 
 	return &state, nil
@@ -51,4 +59,9 @@ func (s *State) Mempool() []database.BlockTx {
 // UpsertMempool adds a new transaction to the mempool.
 func (s *State) UpsertMempool(tx database.BlockTx) error {
 	return s.mempool.Upsert(tx)
+}
+
+// WriteBlock writes to disk.
+func (s *State) WriteBlock(blockData database.BlockData) error {
+	return s.disk.Write(blockData)
 }

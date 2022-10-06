@@ -97,9 +97,10 @@ func (h Handlers) MineBlock(ctx context.Context, w http.ResponseWriter, r *http.
 		return fmt.Errorf("pow: %w", err)
 	}
 
-	data := database.NewBlockData(block)
+	blockData := database.NewBlockData(block)
+	h.State.WriteBlock(blockData)
 
-	return web.Respond(ctx, w, data, http.StatusOK)
+	return web.Respond(ctx, w, blockData, http.StatusOK)
 }
 
 // Sample just provides a starting point for the class.
