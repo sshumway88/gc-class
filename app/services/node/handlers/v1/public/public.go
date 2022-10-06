@@ -51,6 +51,30 @@ func (h Handlers) SubmitWalletTransaction(ctx context.Context, w http.ResponseWr
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
+// Mempool returns the set of uncommitted transactions.
+func (h Handlers) Mempool(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	mempool := h.State.Mempool()
+
+	trans := []tx{}
+	for _, tran := range mempool {
+		trans = append(trans, tx{
+			FromAccount: tran.FromID,
+			To:          tran.ToID,
+			ChainID:     tran.ChainID,
+			Nonce:       tran.Nonce,
+			Value:       tran.Value,
+			Tip:         tran.Tip,
+			Data:        tran.Data,
+			TimeStamp:   tran.TimeStamp,
+			GasPrice:    tran.GasPrice,
+			GasUnits:    tran.GasUnits,
+			Sig:         tran.SignatureString(),
+		})
+	}
+
+	return web.Respond(ctx, w, trans, http.StatusOK)
+}
+
 // Sample just provides a starting point for the class.
 func (h Handlers) Sample(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	resp := struct {
