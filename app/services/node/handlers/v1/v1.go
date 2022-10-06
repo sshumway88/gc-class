@@ -25,6 +25,7 @@ func PublicRoutes(app *web.App, cfg Config) {
 	}
 
 	app.Handle(http.MethodGet, version, "/sample", pbl.Sample)
+	app.Handle(http.MethodPost, version, "/tx/submit", pbl.SubmitWalletTransaction)
 }
 
 // PrivateRoutes binds all the version 1 private routes.
