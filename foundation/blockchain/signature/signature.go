@@ -8,6 +8,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -113,6 +114,22 @@ func ToSignatureBytes(v, r, s *big.Int) []byte {
 	return sig
 }
 
+// SignatureString returns the signature as a string.
+func SignatureString(v, r, s *big.Int) string {
+	return hexutil.Encode(ToSignatureBytesWithArdanID(v, r, s))
+}
+
+// ToSignatureBytesWithArdanID converts the r, s, v values into a slice of bytes
+// keeping the Ardan id.
+func ToSignatureBytesWithArdanID(v, r, s *big.Int) []byte {
+	sig := ToSignatureBytes(v, r, s)
+	sig[64] = byte(v.Uint64())
+
+	return sig
+}
+
+// =============================================================================
+
 // toSignatureValues converts the signature into the r, s, v values.
 func toSignatureValues(sig []byte) (v, r, s *big.Int) {
 	r = new(big.Int).SetBytes(sig[:32])
@@ -121,8 +138,6 @@ func toSignatureValues(sig []byte) (v, r, s *big.Int) {
 
 	return v, r, s
 }
-
-// =============================================================================
 
 // stamp returns a hash of 32 bytes that represents this data with
 // the Ardan stamp embedded into the final hash.

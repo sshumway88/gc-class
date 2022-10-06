@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
 )
@@ -101,4 +102,35 @@ func (tx SignedTx) Validate(chainID uint16) error {
 	}
 
 	return nil
+}
+
+// SignatureString returns the signature as a string.
+func (tx SignedTx) SignatureString() string {
+	return signature.SignatureString(tx.V, tx.R, tx.S)
+}
+
+// String implements the Stringer interface for logging.
+func (tx SignedTx) String() string {
+	return fmt.Sprintf("%s:%d", tx.FromID, tx.Nonce)
+}
+
+// =============================================================================
+
+// BlockTx represents the transaction as it's recorded inside a block. This
+// includes a timestamp and gas fees.
+type BlockTx struct {
+	SignedTx
+	TimeStamp uint64 `json:"timestamp"` // Ethereum: The time the transaction was received.
+	GasPrice  uint64 `json:"gas_price"` // Ethereum: The price of one unit of gas to be paid for fees.
+	GasUnits  uint64 `json:"gas_units"` // Ethereum: The number of units of gas used for this transaction.
+}
+
+// NewBlockTx constructs a new block transaction.
+func NewBlockTx(signedTx SignedTx, gasPrice uint64, unitsOfGas uint64) BlockTx {
+	return BlockTx{
+		SignedTx:  signedTx,
+		TimeStamp: uint64(time.Now().UTC().UnixMilli()),
+		GasPrice:  gasPrice,
+		GasUnits:  unitsOfGas,
+	}
 }
