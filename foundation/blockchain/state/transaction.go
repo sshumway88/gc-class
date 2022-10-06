@@ -16,5 +16,11 @@ func (s *State) UpsertWalletTransaction(signedTx database.SignedTx) error {
 		return err
 	}
 
+	const oneUnitOfGas = 1
+	tx := database.NewBlockTx(signedTx, s.genesis.GasPrice, oneUnitOfGas)
+	if err := s.mempool.Upsert(tx); err != nil {
+		return err
+	}
+
 	return nil
 }
